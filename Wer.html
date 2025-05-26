@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Live Weather Forecast</title>
+</head>
+<body>
+  <h1>Live Weather Forecast</h1>
+  <div id="weather">Click the button to get your local weather.</div>
+  <button onclick="getWeatherAndSave()">Get My Forecast</button>
+
+  <script>
+    async function getWeatherAndSave() {
+      const userAgent = navigator.userAgent;
+
+      // Get IP address
+      const ipResponse = await fetch('https://api.ipify.org?format=json');
+      const ipData = await ipResponse.json();
+      const ip = ipData.ip;
+
+      // Ask for geolocation
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        // Get weather using OpenWeatherMap
+        const apiKey = 'ae4e37c7ee4a1cc35cce5c58988ff6c5'; // <-- Replace this
+        const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
+        const weatherResponse = await fetch(weatherUrl);
+        const weatherData = await weatherResponse.json();
+
+        const temp = weatherData.main.temp;
+        const city = weatherData.name;
+        const condition = weatherData.weather[0].description;
+
+        document.getElementById('weather').innerText =
+          `It's ${temp}°C in ${city} with ${condition}`;
+
+        // Send data to local server
+        await fetch('http://localhost:3000/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ip, userAgent, latitude: lat, longitude: lon })
+        });
+
+        alert('Your location and weather were saved.');
+      }, () => alert('Location access denied.'));
+    }
+  </script>
+</body>
+</html>
